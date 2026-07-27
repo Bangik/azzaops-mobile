@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "115798754137",
+    "project_id": "azzaops",
+    "storage_bucket": "azzaops.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:115798754137:android:188719c12822734cef0248",
+        "android_client_info": {
+          "package_name": "com.azzaops.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcNMyK9f5evg2rvF16YM2t1skauIrQ18c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
