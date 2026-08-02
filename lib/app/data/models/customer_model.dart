@@ -8,7 +8,8 @@ class CustomerModel {
   final String? address;
   final String? city;
   final String? market;
-
+  final String? gmapsLink;
+ 
   CustomerModel({
     required this.id,
     required this.type,
@@ -19,6 +20,7 @@ class CustomerModel {
     this.address,
     this.city,
     this.market,
+    this.gmapsLink,
   });
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class CustomerModel {
       address: json['address'] as String?,
       city: json['city'] as String?,
       market: json['market'] as String?,
+      gmapsLink: json['gmaps_link'] as String?,
     );
   }
 
@@ -45,6 +48,7 @@ class CustomerModel {
         'address': address,
         'city': city,
         'market': market,
+        'gmaps_link': gmapsLink,
       };
 
   String get displayName => type == 'business' && companyName != null

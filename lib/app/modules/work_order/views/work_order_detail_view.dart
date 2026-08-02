@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../app/core/theme/app_theme.dart';
 import '../../../../app/core/widgets/custom_appbar.dart';
 import '../../../../app/core/widgets/loading_widget.dart';
@@ -162,7 +163,41 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
             const Divider(),
             _buildDetailRow('Nama', wo.customer.displayName),
             _buildDetailRow('Telepon', wo.customer.phone),
-            _buildDetailRow('Alamat', wo.location),
+            _buildDetailRow(
+              'Alamat',
+              wo.location,
+              trailing: wo.gmapsLink != null && wo.gmapsLink!.isNotEmpty
+                  ? InkWell(
+                      onTap: () async {
+                        final uri = Uri.parse(wo.gmapsLink!);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } else {
+                          Get.snackbar('Error', 'Tidak dapat membuka Google Maps');
+                        }
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.only(left: 8.0),
+                        child: Icon(Icons.map, color: Colors.green, size: 20),
+                      ),
+                    )
+                  : (wo.customer.gmapsLink != null && wo.customer.gmapsLink!.isNotEmpty
+                      ? InkWell(
+                          onTap: () async {
+                            final uri = Uri.parse(wo.customer.gmapsLink!);
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            } else {
+                              Get.snackbar('Error', 'Tidak dapat membuka Google Maps');
+                            }
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.only(left: 8.0),
+                            child: Icon(Icons.map, color: Colors.green, size: 20),
+                          ),
+                        )
+                      : null),
+            ),
             if (wo.customer.city != null) _buildDetailRow('Kota', wo.customer.city!),
           ],
         ),
@@ -503,7 +538,7 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
     return const SizedBox.shrink();
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(String label, String value, {Widget? trailing}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
@@ -518,9 +553,17 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
           ),
           const Text(': '),
           Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    value,
+                    style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                  ),
+                ),
+                if (trailing != null) trailing,
+              ],
             ),
           ),
         ],

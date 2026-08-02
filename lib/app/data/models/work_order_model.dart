@@ -23,6 +23,7 @@ class WorkOrderModel {
   final double? totalCost;
   final String? notes;
   final int? parentWoId;
+  final String? gmapsLink;
   final List<WorkOrderItemModel> items;
   final List<AssignmentModel> assignments;
   final List<ReportModel> reports;
@@ -47,6 +48,7 @@ class WorkOrderModel {
     this.totalCost,
     this.notes,
     this.parentWoId,
+    this.gmapsLink,
     required this.items,
     required this.assignments,
     required this.reports,
@@ -101,6 +103,7 @@ class WorkOrderModel {
       totalCost: json['total_cost'] != null ? double.parse(json['total_cost'].toString()) : null,
       notes: json['notes'] as String?,
       parentWoId: json['parent_wo_id'] as int?,
+      gmapsLink: json['gmaps_link'] as String?,
       items: itemsList,
       assignments: assignmentsList,
       reports: reportsList,
@@ -127,6 +130,7 @@ class WorkOrderModel {
         'total_cost': totalCost,
         'notes': notes,
         'parent_wo_id': parentWoId,
+        'gmaps_link': gmapsLink,
         'items': items.map((e) => e.toJson()).toList(),
         'assignments': assignments.map((e) => e.toJson()).toList(),
         'reports': reports.map((e) => e.toJson()).toList(),
