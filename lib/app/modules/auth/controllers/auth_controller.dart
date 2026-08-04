@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../../core/utils/storage_helper.dart';
 import '../../../core/utils/fcm_helper.dart';
+import '../../../core/utils/device_helper.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/providers/auth_provider.dart';
 import '../../../routes/app_routes.dart';
@@ -45,6 +46,10 @@ class AuthController extends GetxController {
             final userJson = body['data'] as Map<String, dynamic>;
             final user = UserModel.fromJson(userJson);
             await StorageHelper.saveUserData(user);
+            
+            // Send Device Info on Auto Login
+            await DeviceHelper.sendDeviceInfo();
+
             Get.offAllNamed(AppRoutes.HOME);
             return;
           }
@@ -86,6 +91,9 @@ class AuthController extends GetxController {
 
           await StorageHelper.saveToken(token);
           await StorageHelper.saveUserData(user);
+
+          // Send Device Info
+          await DeviceHelper.sendDeviceInfo();
 
           // Fetch and upload FCM token upon login
           try {
