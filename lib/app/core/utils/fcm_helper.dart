@@ -90,6 +90,7 @@ class FcmHelper {
                 icon: android?.smallIcon ?? '@mipmap/ic_launcher',
                 importance: Importance.max,
                 priority: Priority.high,
+                playSound: true,
               ),
             ),
             payload: jsonEncode(data),

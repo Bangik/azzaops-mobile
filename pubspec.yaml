@@ -23,8 +23,5 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  flutter_launcher_name: ^0.0.1
 flutter:
   uses-material-design: true
-flutter_launcher_name:
-  name: "My Polije"
