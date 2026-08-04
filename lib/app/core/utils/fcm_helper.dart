@@ -26,6 +26,7 @@ class FcmHelper {
     description: 'Channel for AzzaOps emergency and job alerts.',
     importance: Importance.max,
     playSound: true,
+    sound: RawResourceAndroidNotificationSound('notification'),
   );
 
   static Future<void> init() async {
@@ -91,6 +92,7 @@ class FcmHelper {
                 importance: Importance.max,
                 priority: Priority.high,
                 playSound: true,
+                sound: const RawResourceAndroidNotificationSound('notification'),
               ),
             ),
             payload: jsonEncode(data),
