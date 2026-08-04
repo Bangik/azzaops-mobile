@@ -225,7 +225,7 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
             const Divider(),
             _buildDetailRow('Tipe WO', wo.type.toString().toUpperCase()),
             _buildDetailRow('Kategori', wo.serviceCategory.name),
-            _buildDetailRow('Prioritas', wo.priority.toString().toUpperCase()),
+            _buildDetailRow('Prioritas', _getPriorityLabel(wo.priority)),
             _buildDetailRow('Tanggal Rencana', wo.scheduledDate ?? '-'),
             _buildDetailRow('Mulai Aktual', wo.startedAt != null ? wo.startedAt!.split('T').first : '-'),
             _buildDetailRow('Selesai Aktual', wo.completedAt != null ? wo.completedAt!.split('T').first : '-'),
@@ -324,8 +324,14 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                       backgroundColor: AppColors.primary,
                       child: Icon(Icons.person, color: Colors.white),
                     ),
-                    title: Text(assign.technicianName),
-                    subtitle: Text('Status: ${assign.status.toUpperCase()}'),
+                    title: Text(
+                      assign.technicianName,
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      'Status: ${assign.status.toUpperCase()}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
                     trailing: Text(
                       assign.assignedAt.split('T').first,
                       style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
@@ -850,5 +856,20 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
         ],
       ),
     );
+  }
+
+  String _getPriorityLabel(String priority) {
+    switch (priority) {
+      case '1':
+        return 'URGENT';
+      case '2':
+        return 'TINGGI';
+      case '3':
+        return 'NORMAL';
+      case '4':
+        return 'RENDAH';
+      default:
+        return priority.toUpperCase();
+    }
   }
 }

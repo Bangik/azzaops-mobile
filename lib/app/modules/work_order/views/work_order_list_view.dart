@@ -218,8 +218,8 @@ class WorkOrderListView extends GetView<WorkOrderController> {
                           : 'Teknisi: ${wo.assignments.where((a) => a.status != 'transferred').map((a) => a.technicianName).join(", ")}',
                       style: TextStyle(
                         color: wo.assignments.where((a) => a.status != 'transferred').isEmpty ? AppColors.warning : AppColors.textSecondary,
-                        fontSize: 13,
-                        fontWeight: wo.assignments.where((a) => a.status != 'transferred').isEmpty ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 15,
+                        fontWeight: wo.assignments.where((a) => a.status != 'transferred').isEmpty ? FontWeight.bold : FontWeight.bold,
                       ),
                     ),
                   ),
@@ -242,7 +242,7 @@ class WorkOrderListView extends GetView<WorkOrderController> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      wo.priority.toUpperCase(),
+                      _getPriorityLabel(wo.priority),
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -316,16 +316,35 @@ class WorkOrderListView extends GetView<WorkOrderController> {
 
   Color _getPriorityColor(String priority) {
     switch (priority) {
+      case '1':
       case 'urgent':
         return Colors.red.shade900;
+      case '2':
       case 'high':
         return AppColors.error;
+      case '3':
       case 'normal':
         return AppColors.primary;
+      case '4':
       case 'low':
         return Colors.green;
       default:
         return Colors.grey;
+    }
+  }
+
+  String _getPriorityLabel(String priority) {
+    switch (priority) {
+      case '1':
+        return 'URGENT';
+      case '2':
+        return 'TINGGI';
+      case '3':
+        return 'NORMAL';
+      case '4':
+        return 'RENDAH';
+      default:
+        return priority.toUpperCase();
     }
   }
 
