@@ -5,6 +5,7 @@ import 'app/core/utils/storage_helper.dart';
 import 'app/core/utils/fcm_helper.dart';
 import 'app/routes/app_pages.dart';
 import 'app/data/providers/update_service.dart';
+import 'app/core/utils/device_helper.dart';
 import 'dart:io';
 import 'package:flutter/services.dart'; // Untuk rootBundle
 
@@ -39,9 +40,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Check for app updates on launch
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Check for app updates and send device info on launch
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       Get.put(UpdateService()).checkForUpdate();
+      await DeviceHelper.sendDeviceInfo();
     });
 
     return GetMaterialApp(

@@ -4,6 +4,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:get/get.dart';
 import '../../data/providers/api_provider.dart';
+import 'storage_helper.dart';
 
 class DeviceHelper {
   static Future<void> sendDeviceInfo() async {
@@ -33,8 +34,9 @@ class DeviceHelper {
         deviceModel = iosInfo.model;
       }
       
-      if (deviceId.isEmpty) return;
-
+      final userToken = StorageHelper.getToken();
+      if (userToken == null) return; // Only send device info if authenticated
+      
       final apiProvider = Get.put(ApiProvider());
       await apiProvider.post('/devices', {
         'device_id': deviceId,
