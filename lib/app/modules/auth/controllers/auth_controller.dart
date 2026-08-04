@@ -75,10 +75,6 @@ class AuthController extends GetxController {
       isLoading.value = true;
       // We can pass fcm token later if integrated
       final response = await _authProvider.login(email, password);
-      debugPrint('Login response: ${response.statusCode} - ${response.body}');
-      debugPrint('Login request: email=$email, password=****');
-      debugPrint('Login request headers: ${response.request?.headers}');
-      debugPrint("response: ${response}");
 
       if (response.statusCode == 200 && response.body != null) {
         final body = response.body;
@@ -113,7 +109,6 @@ class AuthController extends GetxController {
             response.body != null && response.body['message'] != null
             ? response.body['message']
             : 'Terjadi kesalahan pada server';
-        debugPrint('Login failed: ${response.statusCode} - ${response.body}');
         Get.snackbar(
           'Login Gagal',
           message.toString(),

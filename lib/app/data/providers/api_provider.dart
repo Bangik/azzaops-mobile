@@ -8,6 +8,7 @@ class ApiProvider extends GetConnect {
   void onInit() {
     httpClient.baseUrl = Constants.baseUrl;
     httpClient.timeout = const Duration(seconds: Constants.connectTimeout);
+    allowAutoSignedCert = true;
 
     // Add Bearer Token and Accept headers to each request
     httpClient.addRequestModifier<dynamic>((request) async {

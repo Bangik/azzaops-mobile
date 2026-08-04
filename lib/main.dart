@@ -4,16 +4,32 @@ import 'app/core/theme/app_theme.dart';
 import 'app/core/utils/storage_helper.dart';
 import 'app/core/utils/fcm_helper.dart';
 import 'app/routes/app_pages.dart';
+import 'dart:io';
+import 'package:flutter/services.dart'; // Untuk rootBundle
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  try {
+    // Membaca file sertifikat dari assets
+    ByteData data = await rootBundle.load('assets/ca/certificate.pem');
+
+    // Menambahkan sertifikat ke dalam SecurityContext bawaan aplikasi
+    SecurityContext.defaultContext.setTrustedCertificatesBytes(
+      data.buffer.asUint8List(),
+    );
+
+    debugPrint("Sertifikat SSL berhasil dimuat");
+  } catch (e) {
+    debugPrint("Gagal memuat sertifikat SSL: $e");
+  }
+
   // Initialize GetStorage
   await StorageHelper.init();
 
   // Initialize Firebase and FCM
   await FcmHelper.init();
-  
+
   runApp(const MyApp());
 }
 
