@@ -4,6 +4,7 @@ import 'app/core/theme/app_theme.dart';
 import 'app/core/utils/storage_helper.dart';
 import 'app/core/utils/fcm_helper.dart';
 import 'app/routes/app_pages.dart';
+import 'app/data/providers/update_service.dart';
 import 'dart:io';
 import 'package:flutter/services.dart'; // Untuk rootBundle
 
@@ -38,6 +39,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check for app updates on launch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.put(UpdateService()).checkForUpdate();
+    });
+
     return GetMaterialApp(
       title: 'AzzaOps',
       theme: AppTheme.lightTheme,
