@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../app/core/theme/app_theme.dart';
+import '../../../../app/core/utils/helpers.dart';
 import '../../../../app/core/widgets/custom_appbar.dart';
 import '../../../../app/core/widgets/loading_widget.dart';
 import '../../../../app/routes/app_routes.dart';
@@ -74,7 +75,7 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                     ],
 
                     // Assignments list
-                    _buildAssignmentsCard(wo),
+                    _buildAssignmentsCard(wo, isKepala),
                     const SizedBox(height: 16),
 
                     // Takeover History Card (if any)
@@ -117,7 +118,7 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.primary),
                     ),
                     Text(
-                      'Dibuat: ${wo.createdAt.split('T').first}',
+                      'Dibuat: ${DateHelper.formatDateTime(wo.createdAt)}',
                       style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
@@ -223,12 +224,17 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
               ],
             ),
             const Divider(),
-            _buildDetailRow('Tipe WO', wo.type.toString().toUpperCase()),
+            _buildDetailRow('Tipe WO', wo.type?.name ?? '-'),
             _buildDetailRow('Kategori', wo.serviceCategory.name),
-            _buildDetailRow('Prioritas', _getPriorityLabel(wo.priority)),
-            _buildDetailRow('Tanggal Rencana', wo.scheduledDate ?? '-'),
-            _buildDetailRow('Mulai Aktual', wo.startedAt != null ? wo.startedAt!.split('T').first : '-'),
-            _buildDetailRow('Selesai Aktual', wo.completedAt != null ? wo.completedAt!.split('T').first : '-'),
+            if (wo.jobOrder != null) _buildDetailRow('Urutan Job', '#${wo.jobOrder}'),
+            _buildDetailRow(
+              'Tanggal Rencana',
+              DateHelper.formatDateTime(wo.scheduledDate, timeStr: wo.scheduledTime),
+            ),
+            _buildDetailRow('Mulai Aktual', DateHelper.formatDateTime(wo.startedAt)),
+            _buildDetailRow('Selesai Aktual', DateHelper.formatDateTime(wo.completedAt)),
+            if (wo.duration != null && wo.duration!.isNotEmpty)
+              _buildDetailRow('Lama Pengerjaan', wo.duration!),
           ],
         ),
       ),
@@ -285,21 +291,48 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
     );
   }
 
-  Widget _buildAssignmentsCard(dynamic wo) {
+  Widget _buildAssignmentsCard(dynamic wo, bool isKepala) {
+    final canManage = isKepala && wo.status != 'completed' && wo.status != 'cancelled';
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(Icons.people_outline, color: AppColors.primary),
-                SizedBox(width: 8),
-                Text(
-                  'Penugasan Teknisi',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                const Row(
+                  children: [
+                    Icon(Icons.people_outline, color: AppColors.primary),
+                    SizedBox(width: 8),
+                    Text(
+                      'Penugasan Teknisi',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ],
                 ),
+                if (canManage)
+                  InkWell(
+                    onTap: () {
+                      Get.toNamed(AppRoutes.ASSIGN_TECHNICIAN, arguments: wo.id);
+                    },
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      child: Row(
+                        children: [
+                          Icon(wo.assignments.isEmpty ? Icons.person_add : Icons.edit, size: 16, color: AppColors.primary),
+                          const SizedBox(width: 4),
+                          Text(
+                            wo.assignments.isEmpty ? 'Tugaskan' : 'Ubah',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
             const Divider(),
@@ -333,7 +366,7 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                       style: const TextStyle(fontSize: 14),
                     ),
                     trailing: Text(
-                      assign.assignedAt.split('T').first,
+                      DateHelper.formatDate(assign.assignedAt),
                       style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   );
@@ -429,57 +462,13 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
 
   Widget _buildBottomAction(dynamic wo, bool isKepala) {
     final currentUser = StorageHelper.getUserData();
-    final isAssignedToCurrentUser = wo.assignments.any((a) => (a.technician?.id == currentUser?.id || a.technicianId == currentUser?.id) && a.status != 'transferred');
+    if (currentUser == null) return const SizedBox.shrink();
 
-    if (!isKepala && currentUser?.role == 'teknisi' && !isAssignedToCurrentUser) {
-      if (wo.status != 'pending' && wo.status != 'assigned') {
-        return const SizedBox.shrink();
-      }
+    final isAssignedToCurrentUser = wo.assignments.any((a) => (a.technician?.id == currentUser.id || a.technicianId == currentUser.id) && a.status != 'transferred');
 
-      // Check if there is already a pending takeover request from this technician
-      final hasPendingTakeover = wo.takeovers.any((t) => t.requestedById == currentUser?.id && t.status == 'pending');
-
-      return Container(
-        padding: const EdgeInsets.all(16),
-        color: AppColors.primary,
-        child: ElevatedButton(
-          onPressed: hasPendingTakeover ? null : () {
-            _promptTakeoverNotes(wo.id);
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: hasPendingTakeover ? Colors.grey.shade400 : Colors.white,
-            foregroundColor: hasPendingTakeover ? Colors.white : AppColors.primary,
-            minimumSize: const Size.fromHeight(50),
-          ),
-          child: Text(
-            hasPendingTakeover ? 'PENGALIHAN SEDANG DIPROSES' : 'AMBIL ALIH PEKERJAAN',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-      );
-    }
-
-    if (isKepala) {
-      if (wo.status == 'pending') {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          color: AppColors.primary,
-          child: ElevatedButton(
-            onPressed: () {
-              Get.toNamed(AppRoutes.ASSIGN_TECHNICIAN, arguments: wo.id);
-            },
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size.fromHeight(50),
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.primary,
-            ),
-            child: const Text('ASSIGN TEKNISI', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        );
-      }
-    } else {
-      // For standard technicians
-      if (wo.status == 'assigned') {
+    // 1. Pending WO
+    if (wo.status == 'pending') {
+      if (isKepala) {
         return Container(
           padding: const EdgeInsets.all(16),
           color: AppColors.primary,
@@ -488,7 +477,72 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    // Update to in_progress
+                    // Assign directly to self
+                    controller.assignTechnicians(wo.id, customIds: [currentUser.id]);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primary,
+                  ),
+                  child: const Text('AMBIL SENDIRI', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    Get.toNamed(AppRoutes.ASSIGN_TECHNICIAN, arguments: wo.id);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white, width: 1.5),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('TUGASKAN TEKNISI', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        );
+      } else {
+        // Standard technician can request takeover if allowed
+        final hasPendingTakeover = wo.takeovers.any((t) => t.requestedById == currentUser.id && t.status == 'pending');
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          color: AppColors.primary,
+          child: ElevatedButton(
+            onPressed: hasPendingTakeover ? null : () {
+              _promptTakeoverNotes(wo.id);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: hasPendingTakeover ? Colors.grey.shade400 : Colors.white,
+              foregroundColor: hasPendingTakeover ? Colors.white : AppColors.primary,
+              minimumSize: const Size.fromHeight(50),
+            ),
+            child: Text(
+              hasPendingTakeover ? 'PENGALIHAN SEDANG DIPROSES' : 'AMBIL ALIH PEKERJAAN',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        );
+      }
+    }
+
+    // 2. Assigned WO
+    if (wo.status == 'assigned') {
+      if (isAssignedToCurrentUser) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          color: AppColors.primary,
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
                     controller.updateStatus(wo.id, 'in_progress');
                   },
                   style: ElevatedButton.styleFrom(
@@ -498,7 +552,7 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                   child: const Text('MULAI PEKERJAAN', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
-              if (wo.type == 'checking') ...[
+              if (wo.type?.code == 'checking') ...[
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton(
@@ -520,9 +574,79 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
             ],
           ),
         );
-      }
+      } else if (isKepala) {
+        // Kepala teknisi can assign to self or add more technicians
+        return Container(
+          padding: const EdgeInsets.all(16),
+          color: AppColors.primary,
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Add self to existing assignments
+                    final existingTechIds = wo.assignments
+                        .where((a) => a.status != 'transferred')
+                        .map((a) => a.technicianId as int)
+                        .toSet();
+                    existingTechIds.add(currentUser.id);
+                    controller.assignTechnicians(wo.id, customIds: existingTechIds.toList());
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primary,
+                  ),
+                  child: const Text('GABUNG / AMBIL', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    Get.toNamed(AppRoutes.ASSIGN_TECHNICIAN, arguments: wo.id);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white, width: 1.5),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('UBAH TEKNISI', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        );
+      } else {
+        // Teknisi who is not assigned
+        final hasPendingTakeover = wo.takeovers.any((t) => t.requestedById == currentUser.id && t.status == 'pending');
 
-      if (wo.status == 'in_progress' || wo.status == 'checking') {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          color: AppColors.primary,
+          child: ElevatedButton(
+            onPressed: hasPendingTakeover ? null : () {
+              _promptTakeoverNotes(wo.id);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: hasPendingTakeover ? Colors.grey.shade400 : Colors.white,
+              foregroundColor: hasPendingTakeover ? Colors.white : AppColors.primary,
+              minimumSize: const Size.fromHeight(50),
+            ),
+            child: Text(
+              hasPendingTakeover ? 'PENGALIHAN SEDANG DIPROSES' : 'AMBIL ALIH PEKERJAAN',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        );
+      }
+    }
+
+    // 3. In Progress or Checking WO
+    if (wo.status == 'in_progress' || wo.status == 'checking') {
+      if (isAssignedToCurrentUser) {
         return Container(
           padding: const EdgeInsets.all(16),
           color: AppColors.primary,
@@ -806,7 +930,7 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                       ],
                       const SizedBox(height: 4),
                       Text(
-                        'Tanggal: ${takeover.createdAt.split('T').first}',
+                        'Tanggal: ${DateHelper.formatDateTime(takeover.createdAt)}',
                         style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                       ),
                       if (idx < wo.takeovers.length - 1) const Divider(),
@@ -856,20 +980,5 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
         ],
       ),
     );
-  }
-
-  String _getPriorityLabel(String priority) {
-    switch (priority) {
-      case '1':
-        return 'URGENT';
-      case '2':
-        return 'TINGGI';
-      case '3':
-        return 'NORMAL';
-      case '4':
-        return 'RENDAH';
-      default:
-        return priority.toUpperCase();
-    }
   }
 }

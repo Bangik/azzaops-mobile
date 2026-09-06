@@ -21,14 +21,14 @@ class WorkOrderItemModel {
 
   factory WorkOrderItemModel.fromJson(Map<String, dynamic> json) {
     return WorkOrderItemModel(
-      id: json['id'] as int,
-      workOrderId: json['work_order_id'] as int,
-      description: json['description'] as String,
-      quantity: json['quantity'] as int,
-      unit: json['unit'] as String?,
-      unitPrice: double.parse(json['unit_price'].toString()),
-      totalPrice: double.parse(json['total_price'].toString()),
-      notes: json['notes'] as String?,
+      id: json['id'] is int ? json['id'] as int : (int.tryParse(json['id']?.toString() ?? '0') ?? 0),
+      workOrderId: json['work_order_id'] is int ? json['work_order_id'] as int : (int.tryParse(json['work_order_id']?.toString() ?? '0') ?? 0),
+      description: (json['description'] ?? '-').toString(),
+      quantity: json['quantity'] is int ? json['quantity'] as int : (int.tryParse(json['quantity']?.toString() ?? '1') ?? 1),
+      unit: json['unit']?.toString(),
+      unitPrice: double.tryParse(json['unit_price']?.toString() ?? '0') ?? 0.0,
+      totalPrice: double.tryParse(json['total_price']?.toString() ?? '0') ?? 0.0,
+      notes: json['notes']?.toString(),
     );
   }
 

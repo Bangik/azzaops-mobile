@@ -19,13 +19,13 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      email: json['email'] as String,
-      phone: json['phone'] as String?,
-      role: json['role'] as String,
+      id: json['id'] is int ? json['id'] as int : (int.tryParse(json['id']?.toString() ?? '0') ?? 0),
+      name: (json['name'] ?? '-').toString(),
+      email: (json['email'] ?? '').toString(),
+      phone: json['phone']?.toString(),
+      role: (json['role'] ?? 'teknisi').toString(),
       isActive: (json['is_active'] == 1 || json['is_active'] == true),
-      avatar: json['avatar'] as String?,
+      avatar: json['avatar']?.toString(),
     );
   }
 
@@ -39,6 +39,6 @@ class UserModel {
         'avatar': avatar,
       };
 
-  bool get isKepalaTeknisi => role == 'kepala_teknisi';
+  bool get isKepalaTeknisi => role == 'kepala_teknisi' || role == 'super_admin' || role == 'admin';
   bool get isTeknisi => role == 'teknisi';
 }

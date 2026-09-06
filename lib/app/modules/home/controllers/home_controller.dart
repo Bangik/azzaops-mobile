@@ -12,10 +12,18 @@ class HomeController extends GetxController {
   final user = Rxn<UserModel>();
 
   final isLoading = false.obs;
-  final todayAssignments = 0.obs;
-  final pendingAssignments = 0.obs;
-  final completedToday = 0.obs;
-  final totalCompleted = 0.obs;
+
+  // Selected date filter (default: today)
+  final selectedDate = RxString(
+    DateTime.now().toIso8601String().split('T').first,
+  );
+
+  // 4 Main Dashboard Metrics
+  final myTotalWorkOrders = 0.obs;
+  final allTotalWorkOrders = 0.obs;
+  final myCompletedWorkOrders = 0.obs;
+  final allCompletedWorkOrders = 0.obs;
+
   final recentWorkOrders = <WorkOrderModel>[].obs;
   
   // Navigation State
@@ -39,23 +47,42 @@ class HomeController extends GetxController {
     }
   }
 
+  void changeDateFilter(String dateStr) {
+    selectedDate.value = dateStr;
+    fetchDashboardData();
+  }
+
+  void resetToToday() {
+    selectedDate.value = DateTime.now().toIso8601String().split('T').first;
+    fetchDashboardData();
+  }
+
   Future<void> fetchDashboardData() async {
     try {
       isLoading.value = true;
-      final response = await _apiProvider.get('/dashboard');
+      final query = <String, String>{
+        'date': selectedDate.value,
+      };
+
+      final response = await _apiProvider.get('/dashboard', query: query);
       if (response.statusCode == 200 && response.body != null) {
         final body = response.body;
-        if (body['success'] == true) {
-          final data = body['data'] as Map<String, dynamic>;
-          todayAssignments.value = data['today_assignments'] ?? 0;
-          pendingAssignments.value = data['pending_assignments'] ?? 0;
-          completedToday.value = data['completed_today'] ?? 0;
-          totalCompleted.value = data['total_completed'] ?? 0;
+        if (body['success'] == true && body['data'] is Map) {
+          final data = body['data'] as Map;
+          
+          // Metrics from backend
+          myTotalWorkOrders.value = data['my_total_work_orders'] ?? data['today_assignments'] ?? 0;
+          allTotalWorkOrders.value = data['all_total_work_orders'] ?? 0;
+          myCompletedWorkOrders.value = data['my_completed_work_orders'] ?? data['completed_today'] ?? 0;
+          allCompletedWorkOrders.value = data['all_completed_work_orders'] ?? data['total_completed'] ?? 0;
 
-          if (data['recent_work_orders'] != null) {
+          if (data['recent_work_orders'] is List) {
             final list = data['recent_work_orders'] as List;
             recentWorkOrders.assignAll(
-              list.map((e) => WorkOrderModel.fromJson(e as Map<String, dynamic>)).toList(),
+              list
+                  .whereType<Map>()
+                  .map((e) => WorkOrderModel.fromJson(Map<String, dynamic>.from(e)))
+                  .toList(),
             );
           }
         }

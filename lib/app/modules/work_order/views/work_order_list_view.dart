@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../app/core/theme/app_theme.dart';
+import '../../../../app/core/utils/helpers.dart';
 import '../../../../app/core/widgets/custom_appbar.dart';
 import '../../../../app/core/widgets/loading_widget.dart';
 import '../../../../app/core/widgets/empty_state.dart';
@@ -88,7 +89,7 @@ class WorkOrderListView extends GetView<WorkOrderController> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Menampilkan tanggal: ${controller.selectedDateFilter.value} (${controller.selectedStatusFilter.value.toUpperCase()})',
+                        'Menampilkan tanggal: ${DateHelper.formatDate(controller.selectedDateFilter.value)} (${controller.selectedStatusFilter.value.toUpperCase()})',
                         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.primary),
                       ),
                     ),
@@ -200,7 +201,9 @@ class WorkOrderListView extends GetView<WorkOrderController> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${wo.serviceCategory.name} (${wo.type.toUpperCase()})',
+                      wo.type != null 
+                          ? '${wo.serviceCategory.name} (${wo.type!.name})'
+                          : wo.serviceCategory.name,
                       style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                     ),
                   ),
@@ -230,26 +233,54 @@ class WorkOrderListView extends GetView<WorkOrderController> {
                 children: [
                   const Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.textSecondary),
                   const SizedBox(width: 8),
-                  Text(
-                    wo.scheduledDate ?? '-',
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: _getPriorityColor(wo.priority).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
+                  Expanded(
                     child: Text(
-                      _getPriorityLabel(wo.priority),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: _getPriorityColor(wo.priority),
+                      DateHelper.formatDateTime(wo.scheduledDate, timeStr: wo.scheduledTime),
+                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    ),
+                  ),
+                  if (wo.duration != null && wo.duration!.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.timer_outlined, size: 12, color: Colors.green.shade800),
+                          const SizedBox(width: 4),
+                          Text(
+                            wo.duration!,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green.shade800,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 6),
+                  ],
+                  if (wo.jobOrder != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '#${wo.jobOrder}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -312,40 +343,6 @@ class WorkOrderListView extends GetView<WorkOrderController> {
         ),
       ),
     );
-  }
-
-  Color _getPriorityColor(String priority) {
-    switch (priority) {
-      case '1':
-      case 'urgent':
-        return Colors.red.shade900;
-      case '2':
-      case 'high':
-        return AppColors.error;
-      case '3':
-      case 'normal':
-        return AppColors.primary;
-      case '4':
-      case 'low':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _getPriorityLabel(String priority) {
-    switch (priority) {
-      case '1':
-        return 'URGENT';
-      case '2':
-        return 'TINGGI';
-      case '3':
-        return 'NORMAL';
-      case '4':
-        return 'RENDAH';
-      default:
-        return priority.toUpperCase();
-    }
   }
 
   Future<void> _selectDate(BuildContext context) async {

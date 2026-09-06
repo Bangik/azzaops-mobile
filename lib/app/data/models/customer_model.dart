@@ -25,16 +25,25 @@ class CustomerModel {
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
     return CustomerModel(
-      id: json['id'] as int,
-      type: json['type'] as String,
-      name: json['name'] as String,
-      companyName: json['company_name'] as String?,
-      picName: json['pic_name'] as String?,
-      phone: json['phone'] as String,
-      address: json['address'] as String?,
-      city: json['city'] as String?,
-      market: json['market'] as String?,
-      gmapsLink: json['gmaps_link'] as String?,
+      id: json['id'] is int ? json['id'] as int : (int.tryParse(json['id']?.toString() ?? '0') ?? 0),
+      type: (json['type'] ?? 'individual').toString(),
+      name: (json['name'] ?? '-').toString(),
+      companyName: json['company_name']?.toString(),
+      picName: json['pic_name']?.toString(),
+      phone: (json['phone'] ?? '').toString(),
+      address: json['address']?.toString(),
+      city: json['city']?.toString(),
+      market: json['market']?.toString(),
+      gmapsLink: json['gmaps_link']?.toString(),
+    );
+  }
+
+  factory CustomerModel.empty() {
+    return CustomerModel(
+      id: 0,
+      type: 'individual',
+      name: '-',
+      phone: '',
     );
   }
 

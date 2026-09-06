@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../app/core/theme/app_theme.dart';
+import '../../../../app/core/utils/helpers.dart';
 import '../../../../app/core/widgets/custom_appbar.dart';
 import '../../../../app/core/widgets/loading_widget.dart';
 import '../../../routes/app_routes.dart';
@@ -106,6 +107,11 @@ class HomeView extends GetView<HomeController> {
         title: 'AzzaOps Dashboard',
         actions: [
           IconButton(
+            icon: const Icon(Icons.calendar_month),
+            tooltip: 'Filter Tanggal',
+            onPressed: () => _selectDate(context),
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
               Get.dialog(
@@ -189,7 +195,71 @@ class HomeView extends GetView<HomeController> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+
+              // Date Filter Bar
+              Obx(() {
+                final todayStr = DateTime.now().toIso8601String().split('T').first;
+                final isToday = controller.selectedDate.value == todayStr;
+
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isToday ? Colors.blue.shade50 : Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 16,
+                        color: isToday ? AppColors.primary : Colors.orange.shade800,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          isToday
+                              ? 'Filter: Hari Ini (${DateHelper.formatDate(controller.selectedDate.value)})'
+                              : 'Filter: ${DateHelper.formatDate(controller.selectedDate.value)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isToday ? AppColors.primary : Colors.orange.shade900,
+                          ),
+                        ),
+                      ),
+                      if (!isToday)
+                        InkWell(
+                          onTap: controller.resetToToday,
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            child: Row(
+                              children: [
+                                Icon(Icons.refresh, size: 14, color: Colors.orange.shade900),
+                                const SizedBox(width: 2),
+                                Text(
+                                  'Hari Ini',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange.shade900),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      InkWell(
+                        onTap: () => _selectDate(context),
+                        borderRadius: BorderRadius.circular(4),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8.0, top: 2, bottom: 2),
+                          child: Icon(Icons.edit_calendar, size: 16, color: isToday ? AppColors.primary : Colors.orange.shade900),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 20),
+
               const Text(
                 'Ringkasan Tugas',
                 style: TextStyle(
@@ -200,7 +270,7 @@ class HomeView extends GetView<HomeController> {
               ),
               const SizedBox(height: 12),
               
-              // Statistics Grid
+              // Statistics Grid (4 Cards)
               Obx(() {
                 if (controller.isLoading.value) {
                   return const SizedBox(
@@ -215,35 +285,35 @@ class HomeView extends GetView<HomeController> {
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 1.6,
+                  childAspectRatio: 1.5,
                   children: [
                     _buildStatCard(
-                      title: isKepala ? 'WO Hari Ini' : 'Tugas Hari Ini',
-                      value: '${controller.todayAssignments.value}',
+                      title: 'Pekerjaan Anda',
+                      value: '${controller.myTotalWorkOrders.value}',
                       color: AppColors.primary,
-                      icon: Icons.calendar_today,
-                      onTap: () => _onCardTap(0, isKepala),
+                      icon: Icons.assignment_ind_outlined,
+                      onTap: () => _onCardTap(0),
                     ),
                     _buildStatCard(
-                      title: isKepala ? 'WO Pending Assign' : 'Tugas Pending',
-                      value: '${controller.pendingAssignments.value}',
-                      color: AppColors.warning,
-                      icon: Icons.pending_actions,
-                      onTap: () => _onCardTap(1, isKepala),
+                      title: 'Semua Pekerjaan',
+                      value: '${controller.allTotalWorkOrders.value}',
+                      color: AppColors.accent,
+                      icon: Icons.assignment_outlined,
+                      onTap: () => _onCardTap(1),
                     ),
                     _buildStatCard(
-                      title: 'Selesai Hari Ini',
-                      value: '${controller.completedToday.value}',
+                      title: 'Selesai Anda',
+                      value: '${controller.myCompletedWorkOrders.value}',
                       color: AppColors.success,
-                      icon: Icons.done_all,
-                      onTap: () => _onCardTap(2, isKepala),
+                      icon: Icons.task_alt_outlined,
+                      onTap: () => _onCardTap(2),
                     ),
                     _buildStatCard(
-                      title: 'Total Selesai',
-                      value: '${controller.totalCompleted.value}',
+                      title: 'Semua Selesai',
+                      value: '${controller.allCompletedWorkOrders.value}',
                       color: Colors.indigo,
-                      icon: Icons.check_circle_outline,
-                      onTap: () => _onCardTap(3, isKepala),
+                      icon: Icons.done_all_outlined,
+                      onTap: () => _onCardTap(3),
                     ),
                   ],
                 );
@@ -310,7 +380,7 @@ class HomeView extends GetView<HomeController> {
                             const SizedBox(height: 4),
                             Text(
                               wo.assignments.where((a) => a.status != 'transferred').isEmpty
-                                  ? 'Belum Ditugaskan'
+                                   ? 'Belum Ditugaskan'
                                   : 'Teknisi: ${wo.assignments.where((a) => a.status != 'transferred').map((a) => a.technicianName).join(", ")}',
                               style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                             ),
@@ -335,38 +405,48 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-  void _onCardTap(int cardIndex, bool isKepala) {
-    final todayStr = DateTime.now().toIso8601String().split('T').first;
+  void _onCardTap(int cardIndex) {
+    final date = controller.selectedDate.value;
     String? status;
-    String? date;
 
     switch (cardIndex) {
-      case 0: // Tasks Today
+      case 0: // Pekerjaan Anda
         status = 'all';
-        date = todayStr;
         break;
-      case 1: // Pending
-        status = isKepala ? 'pending' : 'assigned';
-        date = null;
+      case 1: // Semua Pekerjaan
+        status = 'all';
         break;
-      case 2: // Completed Today
+      case 2: // Selesai Anda
         status = 'completed';
-        date = todayStr;
         break;
-      case 3: // Total Completed
+      case 3: // Semua Selesai
         status = 'completed';
-        date = null;
         break;
     }
 
     // Switch to Work Order tab
     controller.changeTabIndex(1);
 
-    // Update filters in WorkOrderController (create/register if not done yet)
+    // Update filters in WorkOrderController
     final woController = Get.isRegistered<WorkOrderController>()
         ? Get.find<WorkOrderController>()
         : Get.put(WorkOrderController());
     woController.setFilters(status: status, date: date);
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final initialDate = DateTime.tryParse(controller.selectedDate.value) ?? DateTime.now();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      helpText: 'PILIH TANGGAL DASHBOARD',
+    );
+    if (picked != null) {
+      final dateStr = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+      controller.changeDateFilter(dateStr);
+    }
   }
 
   Widget _buildStatCard({

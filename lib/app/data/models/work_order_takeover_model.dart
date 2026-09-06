@@ -29,21 +29,21 @@ class WorkOrderTakeoverModel {
 
   factory WorkOrderTakeoverModel.fromJson(Map<String, dynamic> json) {
     return WorkOrderTakeoverModel(
-      id: json['id'] as int,
-      workOrderId: json['work_order_id'] as int,
-      requestedById: json['requested_by'] as int,
-      requester: json['requester'] != null
-          ? UserModel.fromJson(json['requester'] as Map<String, dynamic>)
+      id: json['id'] is int ? json['id'] as int : (int.tryParse(json['id']?.toString() ?? '0') ?? 0),
+      workOrderId: json['work_order_id'] is int ? json['work_order_id'] as int : (int.tryParse(json['work_order_id']?.toString() ?? '0') ?? 0),
+      requestedById: json['requested_by'] is int ? json['requested_by'] as int : (int.tryParse(json['requested_by']?.toString() ?? '0') ?? 0),
+      requester: json['requester'] != null && json['requester'] is Map
+          ? UserModel.fromJson(Map<String, dynamic>.from(json['requester'] as Map))
           : null,
-      originalTechnicianId: json['original_technician_id'] as int,
-      originalTechnician: json['original_technician'] != null
-          ? UserModel.fromJson(json['original_technician'] as Map<String, dynamic>)
+      originalTechnicianId: json['original_technician_id'] is int ? json['original_technician_id'] as int : (int.tryParse(json['original_technician_id']?.toString() ?? '0') ?? 0),
+      originalTechnician: json['original_technician'] != null && json['original_technician'] is Map
+          ? UserModel.fromJson(Map<String, dynamic>.from(json['original_technician'] as Map))
           : null,
-      status: json['status'] as String,
-      approvedBy: json['approved_by'] as int?,
-      rejectedBy: json['rejected_by'] as int?,
-      notes: json['notes'] as String?,
-      createdAt: (json['created_at'] ?? '') as String,
+      status: (json['status'] ?? 'pending').toString(),
+      approvedBy: json['approved_by'] is int ? json['approved_by'] as int : int.tryParse(json['approved_by']?.toString() ?? ''),
+      rejectedBy: json['rejected_by'] is int ? json['rejected_by'] as int : int.tryParse(json['rejected_by']?.toString() ?? ''),
+      notes: json['notes']?.toString(),
+      createdAt: (json['created_at'] ?? '').toString(),
     );
   }
 

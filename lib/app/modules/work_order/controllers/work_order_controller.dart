@@ -4,7 +4,6 @@ import '../../../data/models/user_model.dart';
 import '../../../data/models/work_order_model.dart';
 import '../../../data/providers/work_order_provider.dart';
 import '../../../data/providers/api_provider.dart';
-import '../../../core/utils/storage_helper.dart';
 
 class WorkOrderController extends GetxController {
   final WorkOrderProvider _woProvider = Get.put(WorkOrderProvider());
@@ -87,10 +86,11 @@ class WorkOrderController extends GetxController {
 
       if (response.statusCode == 200 && response.body != null) {
         final body = response.body;
-        if (body['success'] == true) {
+        if (body['success'] == true && body['data'] is List) {
           final list = body['data'] as List;
           final newItems = list
-              .map((e) => WorkOrderModel.fromJson(e as Map<String, dynamic>))
+              .whereType<Map>()
+              .map((e) => WorkOrderModel.fromJson(Map<String, dynamic>.from(e)))
               .toList();
 
           if (isRefresh) {
@@ -100,7 +100,7 @@ class WorkOrderController extends GetxController {
           }
 
           // Parse pagination metadata
-          if (body['meta'] != null) {
+          if (body['meta'] != null && body['meta'] is Map) {
             currentPage.value = body['meta']['current_page'] ?? nextPage;
             lastPage.value = body['meta']['last_page'] ?? nextPage;
           }
@@ -125,9 +125,9 @@ class WorkOrderController extends GetxController {
 
       if (response.statusCode == 200 && response.body != null) {
         final body = response.body;
-        if (body['success'] == true) {
+        if (body['success'] == true && body['data'] is Map) {
           detailWorkOrder.value = WorkOrderModel.fromJson(
-            body['data'] as Map<String, dynamic>,
+            Map<String, dynamic>.from(body['data'] as Map),
           );
         }
       }
@@ -192,8 +192,9 @@ class WorkOrderController extends GetxController {
   }
 
   // Submit assignment from Kepala Teknisi
-  Future<void> assignTechnicians(int workOrderId) async {
-    if (selectedTechnicianIds.isEmpty) {
+  Future<void> assignTechnicians(int workOrderId, {List<int>? customIds, bool navigateBack = true}) async {
+    final ids = customIds ?? selectedTechnicianIds.toList();
+    if (ids.isEmpty) {
       Get.snackbar('Peringatan', 'Silakan pilih minimal satu teknisi');
       return;
     }
@@ -202,14 +203,14 @@ class WorkOrderController extends GetxController {
       isLoading.value = true;
       final response = await _apiProvider.post(
         '/work-orders/$workOrderId/assign',
-        {'technician_ids': selectedTechnicianIds.toList()},
+        {'technician_ids': ids},
       );
 
       if (response.statusCode == 200 && response.body != null) {
         final body = response.body;
         if (body['success'] == true) {
-          Get.snackbar('Sukses', 'Teknisi berhasil ditugaskan');
-          Get.back(); // Go back to Detail WO screen
+          Get.snackbar('Sukses', 'Penugasan berhasil disimpan');
+          if (navigateBack) Get.back();
           fetchOrderDetail(workOrderId);
           fetchWorkOrders();
         } else {
