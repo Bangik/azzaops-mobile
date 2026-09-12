@@ -15,10 +15,20 @@ class WorkOrderProvider extends ApiProvider {
     return get('/work-orders/$id');
   }
 
-  Future<Response> updateWorkOrderStatus(int id, String status, {String? notes}) {
+  Future<Response> updateWorkOrderStatus(
+    int id,
+    String status, {
+    String? notes,
+  }) {
     return put('/work-orders/$id/status', {
       'status': status,
       if (notes != null) 'notes': notes,
+    });
+  }
+
+  Future<Response> pauseWorkOrder(int id, {String? reason}) {
+    return post('/work-orders/$id/pause', {
+      if (reason != null) 'notes': reason,
     });
   }
 

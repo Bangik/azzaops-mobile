@@ -6,6 +6,25 @@ class ReportProvider extends ApiProvider {
     return post('/work-orders/$workOrderId/reports', form);
   }
 
+  Future<Response> submitFinal(int workOrderId, Map<String, dynamic> fields) {
+    return post('/work-orders/$workOrderId/reports', fields);
+  }
+
+  Future<Response> getDraft(int workOrderId) {
+    return get('/work-orders/$workOrderId/reports/draft');
+  }
+
+  Future<Response> saveDraftFields(
+    int workOrderId,
+    Map<String, dynamic> fields,
+  ) {
+    return post('/work-orders/$workOrderId/reports/draft', fields);
+  }
+
+  Future<Response> deleteDraftPhoto(int photoId) {
+    return delete('/reports/photos/$photoId');
+  }
+
   Future<Response> getReports(int workOrderId) {
     return get('/work-orders/$workOrderId/reports');
   }

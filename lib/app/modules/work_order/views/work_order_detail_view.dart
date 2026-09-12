@@ -6,6 +6,7 @@ import '../../../../app/core/utils/helpers.dart';
 import '../../../../app/core/widgets/custom_appbar.dart';
 import '../../../../app/core/widgets/loading_widget.dart';
 import '../../../../app/routes/app_routes.dart';
+import '../../../../app/core/utils/constants.dart';
 import '../controllers/work_order_controller.dart';
 import '../../../core/utils/storage_helper.dart';
 import '../../../data/models/user_model.dart';
@@ -280,6 +281,74 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
             ),
             if (wo.duration != null && wo.duration!.isNotEmpty)
               _buildDetailRow('Lama Pengerjaan', wo.duration!),
+            if (wo.sessions.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              const Text(
+                'Riwayat Sesi Pengerjaan',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              ...wo.sessions.asMap().entries.map<Widget>((entry) {
+                final idx = entry.key;
+                final session = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Sesi ${idx + 1}: ',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                '${DateHelper.formatDateTime(session.startedAt)} - '
+                                '${session.endedAt != null ? DateHelper.formatDateTime(session.endedAt) : "Sedang berjalan"}',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          'Durasi: ${session.duration ?? "-"}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        if (session.notes != null && session.notes!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              'Ditunda: ${session.notes}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ],
           ],
         ),
       ),
@@ -515,7 +584,7 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                                   // Prepend host URL if photoUrl is a relative path
                                   photo.photoUrl.startsWith('http')
                                       ? photo.photoUrl
-                                      : 'http://10.0.2.2:8000/storage/${photo.photoUrl}',
+                                      : '${Constants.mediaBaseUrl}/${photo.photoUrl}',
                                   width: 100,
                                   height: 100,
                                   fit: BoxFit.cover,
@@ -558,6 +627,30 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
 
     // 1. Pending WO
     if (wo.status == 'pending') {
+      // Already-assigned technician whose work was paused (has prior sessions)
+      // just needs to resume — not go through takeover/assignment flow again.
+      if (isAssignedToCurrentUser) {
+        final wasPaused = wo.sessions.isNotEmpty;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          color: AppColors.primary,
+          child: ElevatedButton(
+            onPressed: () {
+              controller.updateStatus(wo.id, 'in_progress');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.primary,
+              minimumSize: const Size.fromHeight(50),
+            ),
+            child: Text(
+              wasPaused ? 'LANJUTKAN PEKERJAAN' : 'MULAI PEKERJAAN',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        );
+      }
+
       if (isKepala) {
         return Container(
           padding: const EdgeInsets.all(16),
@@ -784,25 +877,92 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
         return Container(
           padding: const EdgeInsets.all(16),
           color: AppColors.primary,
-          child: ElevatedButton(
-            onPressed: () {
-              Get.toNamed(AppRoutes.SUBMIT_REPORT, arguments: wo.id);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.primary,
-              minimumSize: const Size.fromHeight(50),
-            ),
-            child: const Text(
-              'SUBMIT LAPORAN',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _promptPauseReason(wo.id),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white, width: 1.5),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'TUNDA PEKERJAAN',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.toNamed(AppRoutes.SUBMIT_REPORT, arguments: wo.id);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text(
+                    'SUBMIT LAPORAN',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       }
     }
 
     return const SizedBox.shrink();
+  }
+
+  void _promptPauseReason(int workOrderId) {
+    final reasonController = TextEditingController();
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Tunda Pekerjaan'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Pekerjaan akan berstatus Pending. Progres & durasi yang sudah berjalan tetap tersimpan dan bisa dilanjutkan nanti.',
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonController,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Alasan (Opsional)',
+                hintText: 'Misal: customer ada urusan, dilanjut besok',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              controller.pauseWorkOrder(
+                workOrderId,
+                reason: reasonController.text.trim().isEmpty
+                    ? null
+                    : reasonController.text.trim(),
+              );
+            },
+            child: const Text('Tunda'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildDetailRow(String label, String value, {Widget? trailing}) {

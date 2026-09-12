@@ -17,7 +17,7 @@ class WorkOrderController extends GetxController {
   final workOrders = <WorkOrderModel>[].obs;
   final selectedStatusFilter = 'all'.obs;
   final selectedDateFilter = RxnString();
-  
+
   // Pagination State
   final currentPage = 1.obs;
   final lastPage = 1.obs;
@@ -44,8 +44,11 @@ class WorkOrderController extends GetxController {
   }
 
   void _scrollListener() {
-    if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 200) {
-      if (!isLoading.value && !isLoadingMore.value && currentPage.value < lastPage.value) {
+    if (scrollController.position.pixels >=
+        scrollController.position.maxScrollExtent - 200) {
+      if (!isLoading.value &&
+          !isLoadingMore.value &&
+          currentPage.value < lastPage.value) {
         fetchWorkOrders(isRefresh: false);
       }
     }
@@ -168,6 +171,32 @@ class WorkOrderController extends GetxController {
     }
   }
 
+  // Pause an in-progress/checking job — work order goes back to 'pending' but
+  // its progress (sessions) is preserved so duration keeps accumulating later.
+  Future<void> pauseWorkOrder(int id, {String? reason}) async {
+    try {
+      isLoading.value = true;
+      final response = await _woProvider.pauseWorkOrder(id, reason: reason);
+
+      if (response.statusCode == 200 && response.body != null) {
+        final body = response.body;
+        if (body['success'] == true) {
+          Get.snackbar('Sukses', 'Pekerjaan ditunda, bisa dilanjutkan nanti');
+          fetchOrderDetail(id);
+          fetchWorkOrders();
+        } else {
+          Get.snackbar('Error', body['message'] ?? 'Gagal menunda pekerjaan');
+        }
+      } else {
+        Get.snackbar('Error', 'Terjadi kesalahan pada server');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal menunda pekerjaan: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   // Load available technicians for Kepala Teknisi
   Future<void> fetchAvailableTechnicians() async {
     try {
@@ -192,7 +221,11 @@ class WorkOrderController extends GetxController {
   }
 
   // Submit assignment from Kepala Teknisi
-  Future<void> assignTechnicians(int workOrderId, {List<int>? customIds, bool navigateBack = true}) async {
+  Future<void> assignTechnicians(
+    int workOrderId, {
+    List<int>? customIds,
+    bool navigateBack = true,
+  }) async {
     final ids = customIds ?? selectedTechnicianIds.toList();
     if (ids.isEmpty) {
       Get.snackbar('Peringatan', 'Silakan pilih minimal satu teknisi');
@@ -238,14 +271,21 @@ class WorkOrderController extends GetxController {
       if (response.statusCode == 200 && response.body != null) {
         final body = response.body;
         if (body['success'] == true) {
-          Get.snackbar('Sukses', 'Permintaan pengambilalihan berhasil diajukan');
+          Get.snackbar(
+            'Sukses',
+            'Permintaan pengambilalihan berhasil diajukan',
+          );
           fetchOrderDetail(workOrderId);
           fetchWorkOrders();
         } else {
-          Get.snackbar('Error', body['message'] ?? 'Gagal mengajukan pengambilalihan');
+          Get.snackbar(
+            'Error',
+            body['message'] ?? 'Gagal mengajukan pengambilalihan',
+          );
         }
       } else {
-        final message = response.body != null && response.body['message'] != null
+        final message =
+            response.body != null && response.body['message'] != null
             ? response.body['message']
             : 'Gagal mengajukan pengambilalihan';
         Get.snackbar('Error', message.toString());
@@ -261,7 +301,10 @@ class WorkOrderController extends GetxController {
   Future<void> approveTakeover(int takeoverId, int workOrderId) async {
     try {
       isLoading.value = true;
-      final response = await _apiProvider.post('/takeovers/$takeoverId/approve', {});
+      final response = await _apiProvider.post(
+        '/takeovers/$takeoverId/approve',
+        {},
+      );
 
       if (response.statusCode == 200 && response.body != null) {
         final body = response.body;
@@ -270,10 +313,14 @@ class WorkOrderController extends GetxController {
           fetchOrderDetail(workOrderId);
           fetchWorkOrders();
         } else {
-          Get.snackbar('Error', body['message'] ?? 'Gagal memproses persetujuan');
+          Get.snackbar(
+            'Error',
+            body['message'] ?? 'Gagal memproses persetujuan',
+          );
         }
       } else {
-        final message = response.body != null && response.body['message'] != null
+        final message =
+            response.body != null && response.body['message'] != null
             ? response.body['message']
             : 'Terjadi kesalahan pada server';
         Get.snackbar('Error', message.toString());
@@ -289,7 +336,10 @@ class WorkOrderController extends GetxController {
   Future<void> rejectTakeover(int takeoverId, int workOrderId) async {
     try {
       isLoading.value = true;
-      final response = await _apiProvider.post('/takeovers/$takeoverId/reject', {});
+      final response = await _apiProvider.post(
+        '/takeovers/$takeoverId/reject',
+        {},
+      );
 
       if (response.statusCode == 200 && response.body != null) {
         final body = response.body;
@@ -298,10 +348,14 @@ class WorkOrderController extends GetxController {
           fetchOrderDetail(workOrderId);
           fetchWorkOrders();
         } else {
-          Get.snackbar('Error', body['message'] ?? 'Gagal menolak pengambilalihan');
+          Get.snackbar(
+            'Error',
+            body['message'] ?? 'Gagal menolak pengambilalihan',
+          );
         }
       } else {
-        final message = response.body != null && response.body['message'] != null
+        final message =
+            response.body != null && response.body['message'] != null
             ? response.body['message']
             : 'Terjadi kesalahan pada server';
         Get.snackbar('Error', message.toString());

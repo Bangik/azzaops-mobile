@@ -6,6 +6,7 @@ import 'assignment_model.dart';
 import 'report_model.dart';
 import 'work_order_takeover_model.dart';
 import 'work_order_type_model.dart';
+import 'work_order_session_model.dart';
 
 class WorkOrderModel {
   final int id;
@@ -34,6 +35,7 @@ class WorkOrderModel {
   final List<AssignmentModel> assignments;
   final List<ReportModel> reports;
   final List<WorkOrderTakeoverModel> takeovers;
+  final List<WorkOrderSessionModel> sessions;
   final String createdAt;
 
   WorkOrderModel({
@@ -63,8 +65,12 @@ class WorkOrderModel {
     required this.assignments,
     required this.reports,
     required this.takeovers,
+    required this.sessions,
     required this.createdAt,
   });
+
+  /// True when a technician paused work and hasn't resumed yet (has sessions but WO went back to pending).
+  bool get isPausedWithProgress => status == 'pending' && sessions.isNotEmpty;
 
   factory WorkOrderModel.fromJson(Map<String, dynamic> json) {
     var itemsList = <WorkOrderItemModel>[];
@@ -98,6 +104,16 @@ class WorkOrderModel {
           .map(
             (i) =>
                 WorkOrderTakeoverModel.fromJson(Map<String, dynamic>.from(i)),
+          )
+          .toList();
+    }
+
+    var sessionsList = <WorkOrderSessionModel>[];
+    if (json['sessions'] is List) {
+      sessionsList = (json['sessions'] as List)
+          .whereType<Map>()
+          .map(
+            (i) => WorkOrderSessionModel.fromJson(Map<String, dynamic>.from(i)),
           )
           .toList();
     }
@@ -181,6 +197,7 @@ class WorkOrderModel {
       assignments: assignmentsList,
       reports: reportsList,
       takeovers: takeoversList,
+      sessions: sessionsList,
       createdAt: (json['created_at'] ?? '')?.toString() ?? '',
     );
   }
@@ -212,6 +229,7 @@ class WorkOrderModel {
     'assignments': assignments.map((e) => e.toJson()).toList(),
     'reports': reports.map((e) => e.toJson()).toList(),
     'takeovers': takeovers.map((e) => e.toJson()).toList(),
+    'sessions': sessions.map((e) => e.toJson()).toList(),
     'created_at': createdAt,
   };
 }
