@@ -1161,7 +1161,7 @@ GET /api/v1/work-orders
             Kepala Teknisi → semua WO yang status >= 'pending'
 
 GET /api/v1/work-orders/{id}
-  Response: { data: WorkOrder (with customer, items, assignments, reports) }
+  Response: { data: WorkOrder (with vendor, customer, items, assignments, reports) }
 
 GET /api/v1/work-orders/today
   Query:    { page?: int, per_page?: int }

@@ -16,7 +16,7 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
   @override
   Widget build(BuildContext context) {
     final int woId = Get.arguments as int;
-    
+
     // Fetch details on load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.fetchOrderDetail(woId);
@@ -91,7 +91,7 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                 ),
               ),
             ),
-            
+
             // Bottom Action buttons based on Role and Status
             _buildBottomAction(wo, isKepala),
           ],
@@ -115,11 +115,18 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                   children: [
                     Text(
                       wo.woNumber,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.primary),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: AppColors.primary,
+                      ),
                     ),
                     Text(
                       'Dibuat: ${DateHelper.formatDateTime(wo.createdAt)}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -137,7 +144,7 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                 wo.description!,
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
-            ]
+            ],
           ],
         ),
       ),
@@ -162,6 +169,16 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
               ],
             ),
             const Divider(),
+            if (wo.vendor != null)
+              _buildDetailRow(
+                'Vendor',
+                wo.vendor!.name,
+                trailing: const Icon(
+                  Icons.business,
+                  color: AppColors.primary,
+                  size: 16,
+                ),
+              ),
             _buildDetailRow('Nama', wo.customer.displayName),
             _buildDetailRow('Telepon', wo.customer.phone),
             _buildDetailRow(
@@ -172,9 +189,15 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                       onTap: () async {
                         final uri = Uri.parse(wo.gmapsLink!);
                         if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          await launchUrl(
+                            uri,
+                            mode: LaunchMode.externalApplication,
+                          );
                         } else {
-                          Get.snackbar('Error', 'Tidak dapat membuka Google Maps');
+                          Get.snackbar(
+                            'Error',
+                            'Tidak dapat membuka Google Maps',
+                          );
                         }
                       },
                       child: const Padding(
@@ -182,24 +205,36 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                         child: Icon(Icons.map, color: Colors.green, size: 20),
                       ),
                     )
-                  : (wo.customer.gmapsLink != null && wo.customer.gmapsLink!.isNotEmpty
-                      ? InkWell(
-                          onTap: () async {
-                            final uri = Uri.parse(wo.customer.gmapsLink!);
-                            if (await canLaunchUrl(uri)) {
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
-                            } else {
-                              Get.snackbar('Error', 'Tidak dapat membuka Google Maps');
-                            }
-                          },
-                          child: const Padding(
-                            padding: EdgeInsets.only(left: 8.0),
-                            child: Icon(Icons.map, color: Colors.green, size: 20),
-                          ),
-                        )
-                      : null),
+                  : (wo.customer.gmapsLink != null &&
+                            wo.customer.gmapsLink!.isNotEmpty
+                        ? InkWell(
+                            onTap: () async {
+                              final uri = Uri.parse(wo.customer.gmapsLink!);
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(
+                                  uri,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              } else {
+                                Get.snackbar(
+                                  'Error',
+                                  'Tidak dapat membuka Google Maps',
+                                );
+                              }
+                            },
+                            child: const Padding(
+                              padding: EdgeInsets.only(left: 8.0),
+                              child: Icon(
+                                Icons.map,
+                                color: Colors.green,
+                                size: 20,
+                              ),
+                            ),
+                          )
+                        : null),
             ),
-            if (wo.customer.city != null) _buildDetailRow('Kota', wo.customer.city!),
+            if (wo.customer.city != null)
+              _buildDetailRow('Kota', wo.customer.city!),
           ],
         ),
       ),
@@ -226,13 +261,23 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
             const Divider(),
             _buildDetailRow('Tipe WO', wo.type?.name ?? '-'),
             _buildDetailRow('Kategori', wo.serviceCategory.name),
-            if (wo.jobOrder != null) _buildDetailRow('Urutan Job', '#${wo.jobOrder}'),
+            if (wo.jobOrder != null)
+              _buildDetailRow('Urutan Job', '#${wo.jobOrder}'),
             _buildDetailRow(
               'Tanggal Rencana',
-              DateHelper.formatDateTime(wo.scheduledDate, timeStr: wo.scheduledTime),
+              DateHelper.formatDateTime(
+                wo.scheduledDate,
+                timeStr: wo.scheduledTime,
+              ),
             ),
-            _buildDetailRow('Mulai Aktual', DateHelper.formatDateTime(wo.startedAt)),
-            _buildDetailRow('Selesai Aktual', DateHelper.formatDateTime(wo.completedAt)),
+            _buildDetailRow(
+              'Mulai Aktual',
+              DateHelper.formatDateTime(wo.startedAt),
+            ),
+            _buildDetailRow(
+              'Selesai Aktual',
+              DateHelper.formatDateTime(wo.completedAt),
+            ),
             if (wo.duration != null && wo.duration!.isNotEmpty)
               _buildDetailRow('Lama Pengerjaan', wo.duration!),
           ],
@@ -292,7 +337,8 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
   }
 
   Widget _buildAssignmentsCard(dynamic wo, bool isKepala) {
-    final canManage = isKepala && wo.status != 'completed' && wo.status != 'cancelled';
+    final canManage =
+        isKepala && wo.status != 'completed' && wo.status != 'cancelled';
 
     return Card(
       child: Padding(
@@ -309,25 +355,44 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                     SizedBox(width: 8),
                     Text(
                       'Penugasan Teknisi',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                   ],
                 ),
                 if (canManage)
                   InkWell(
                     onTap: () {
-                      Get.toNamed(AppRoutes.ASSIGN_TECHNICIAN, arguments: wo.id);
+                      Get.toNamed(
+                        AppRoutes.ASSIGN_TECHNICIAN,
+                        arguments: wo.id,
+                      );
                     },
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       child: Row(
                         children: [
-                          Icon(wo.assignments.isEmpty ? Icons.person_add : Icons.edit, size: 16, color: AppColors.primary),
+                          Icon(
+                            wo.assignments.isEmpty
+                                ? Icons.person_add
+                                : Icons.edit,
+                            size: 16,
+                            color: AppColors.primary,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             wo.assignments.isEmpty ? 'Tugaskan' : 'Ubah',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
                           ),
                         ],
                       ),
@@ -341,7 +406,10 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                 padding: EdgeInsets.symmetric(vertical: 8.0),
                 child: Text(
                   'Belum ada teknisi ditugaskan',
-                  style: TextStyle(color: AppColors.textSecondary, fontStyle: FontStyle.italic),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               )
             else
@@ -359,7 +427,10 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                     ),
                     title: Text(
                       assign.technicianName,
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     subtitle: Text(
                       'Status: ${assign.status.toUpperCase()}',
@@ -367,7 +438,10 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                     ),
                     trailing: Text(
                       DateHelper.formatDate(assign.assignedAt),
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   );
                 },
@@ -412,11 +486,19 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                     const SizedBox(height: 4),
                     _buildDetailRow('Temuan', rpt.findings),
                     _buildDetailRow('Pekerjaan', rpt.workDone),
-                    if (rpt.recommendations != null) _buildDetailRow('Rekomendasi', rpt.recommendations!),
-                    if (rpt.materialsUsed != null) _buildDetailRow('Sparepart', rpt.materialsUsed!),
+                    if (rpt.recommendations != null)
+                      _buildDetailRow('Rekomendasi', rpt.recommendations!),
+                    if (rpt.materialsUsed != null)
+                      _buildDetailRow('Sparepart', rpt.materialsUsed!),
                     const SizedBox(height: 8),
                     if (rpt.photos.isNotEmpty) ...[
-                      const Text('Dokumentasi Foto:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Dokumentasi Foto:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       SizedBox(
                         height: 100,
@@ -440,7 +522,10 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                                   errorBuilder: (context, _, __) => Container(
                                     width: 100,
                                     color: Colors.grey.shade300,
-                                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                                    child: const Icon(
+                                      Icons.broken_image,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -464,7 +549,12 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
     final currentUser = StorageHelper.getUserData();
     if (currentUser == null) return const SizedBox.shrink();
 
-    final isAssignedToCurrentUser = wo.assignments.any((a) => (a.technician?.id == currentUser.id || a.technicianId == currentUser.id) && a.status != 'transferred');
+    final isAssignedToCurrentUser = wo.assignments.any(
+      (a) =>
+          (a.technician?.id == currentUser.id ||
+              a.technicianId == currentUser.id) &&
+          a.status != 'transferred',
+    );
 
     // 1. Pending WO
     if (wo.status == 'pending') {
@@ -478,13 +568,19 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                 child: ElevatedButton(
                   onPressed: () {
                     // Assign directly to self
-                    controller.assignTechnicians(wo.id, customIds: [currentUser.id]);
+                    controller.assignTechnicians(
+                      wo.id,
+                      customIds: [currentUser.id],
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: AppColors.primary,
                   ),
-                  child: const Text('AMBIL SENDIRI', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'AMBIL SENDIRI',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -501,7 +597,10 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text('TUGASKAN TEKNISI', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'TUGASKAN TEKNISI',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -509,22 +608,32 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
         );
       } else {
         // Standard technician can request takeover if allowed
-        final hasPendingTakeover = wo.takeovers.any((t) => t.requestedById == currentUser.id && t.status == 'pending');
+        final hasPendingTakeover = wo.takeovers.any(
+          (t) => t.requestedById == currentUser.id && t.status == 'pending',
+        );
 
         return Container(
           padding: const EdgeInsets.all(16),
           color: AppColors.primary,
           child: ElevatedButton(
-            onPressed: hasPendingTakeover ? null : () {
-              _promptTakeoverNotes(wo.id);
-            },
+            onPressed: hasPendingTakeover
+                ? null
+                : () {
+                    _promptTakeoverNotes(wo.id);
+                  },
             style: ElevatedButton.styleFrom(
-              backgroundColor: hasPendingTakeover ? Colors.grey.shade400 : Colors.white,
-              foregroundColor: hasPendingTakeover ? Colors.white : AppColors.primary,
+              backgroundColor: hasPendingTakeover
+                  ? Colors.grey.shade400
+                  : Colors.white,
+              foregroundColor: hasPendingTakeover
+                  ? Colors.white
+                  : AppColors.primary,
               minimumSize: const Size.fromHeight(50),
             ),
             child: Text(
-              hasPendingTakeover ? 'PENGALIHAN SEDANG DIPROSES' : 'AMBIL ALIH PEKERJAAN',
+              hasPendingTakeover
+                  ? 'PENGALIHAN SEDANG DIPROSES'
+                  : 'AMBIL ALIH PEKERJAAN',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
@@ -549,7 +658,10 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                     backgroundColor: Colors.white,
                     foregroundColor: AppColors.primary,
                   ),
-                  child: const Text('MULAI PEKERJAAN', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'MULAI PEKERJAAN',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
               if (wo.type?.code == 'checking') ...[
@@ -567,7 +679,10 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text('PENGECEKAN', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'PENGECEKAN',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
@@ -590,13 +705,19 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                         .map((a) => a.technicianId as int)
                         .toSet();
                     existingTechIds.add(currentUser.id);
-                    controller.assignTechnicians(wo.id, customIds: existingTechIds.toList());
+                    controller.assignTechnicians(
+                      wo.id,
+                      customIds: existingTechIds.toList(),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: AppColors.primary,
                   ),
-                  child: const Text('GABUNG / AMBIL', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'GABUNG / AMBIL',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -613,7 +734,10 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text('UBAH TEKNISI', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'UBAH TEKNISI',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -621,22 +745,32 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
         );
       } else {
         // Teknisi who is not assigned
-        final hasPendingTakeover = wo.takeovers.any((t) => t.requestedById == currentUser.id && t.status == 'pending');
+        final hasPendingTakeover = wo.takeovers.any(
+          (t) => t.requestedById == currentUser.id && t.status == 'pending',
+        );
 
         return Container(
           padding: const EdgeInsets.all(16),
           color: AppColors.primary,
           child: ElevatedButton(
-            onPressed: hasPendingTakeover ? null : () {
-              _promptTakeoverNotes(wo.id);
-            },
+            onPressed: hasPendingTakeover
+                ? null
+                : () {
+                    _promptTakeoverNotes(wo.id);
+                  },
             style: ElevatedButton.styleFrom(
-              backgroundColor: hasPendingTakeover ? Colors.grey.shade400 : Colors.white,
-              foregroundColor: hasPendingTakeover ? Colors.white : AppColors.primary,
+              backgroundColor: hasPendingTakeover
+                  ? Colors.grey.shade400
+                  : Colors.white,
+              foregroundColor: hasPendingTakeover
+                  ? Colors.white
+                  : AppColors.primary,
               minimumSize: const Size.fromHeight(50),
             ),
             child: Text(
-              hasPendingTakeover ? 'PENGALIHAN SEDANG DIPROSES' : 'AMBIL ALIH PEKERJAAN',
+              hasPendingTakeover
+                  ? 'PENGALIHAN SEDANG DIPROSES'
+                  : 'AMBIL ALIH PEKERJAAN',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
@@ -659,7 +793,10 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
               foregroundColor: AppColors.primary,
               minimumSize: const Size.fromHeight(50),
             ),
-            child: const Text('SUBMIT LAPORAN', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'SUBMIT LAPORAN',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         );
       }
@@ -678,7 +815,10 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
             width: 120,
             child: Text(
               label,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
             ),
           ),
           const Text(': '),
@@ -689,7 +829,10 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                 Expanded(
                   child: Text(
                     value,
-                    style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
                 if (trailing != null) trailing,
@@ -764,8 +907,12 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
     if (pendingTakeovers.isEmpty) return const SizedBox.shrink();
     final pendingTakeover = pendingTakeovers.first;
 
-    final isOriginalTech = pendingTakeover.originalTechnicianId == currentUser.id;
-    final isManager = currentUser.isKepalaTeknisi || currentUser.role == 'admin' || currentUser.role == 'super_admin';
+    final isOriginalTech =
+        pendingTakeover.originalTechnicianId == currentUser.id;
+    final isManager =
+        currentUser.isKepalaTeknisi ||
+        currentUser.role == 'admin' ||
+        currentUser.role == 'super_admin';
 
     // Show only to original technician or manager
     if (!isOriginalTech && !isManager) return const SizedBox.shrink();
@@ -784,24 +931,40 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
           children: [
             const Row(
               children: [
-                Icon(Icons.swap_horizontal_circle_outlined, color: Colors.amber, size: 24),
+                Icon(
+                  Icons.swap_horizontal_circle_outlined,
+                  color: Colors.amber,
+                  size: 24,
+                ),
                 SizedBox(width: 8),
                 Text(
                   'Pengalihan Pekerjaan',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.orange),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Colors.orange,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
               'Teknisi ${pendingTakeover.requester?.name ?? 'Lain'} mengajukan untuk mengambil alih pekerjaan ini dari ${pendingTakeover.originalTechnician?.name ?? 'Anda'}.',
-              style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textPrimary,
+              ),
             ),
-            if (pendingTakeover.notes != null && pendingTakeover.notes!.isNotEmpty) ...[
+            if (pendingTakeover.notes != null &&
+                pendingTakeover.notes!.isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(
                 'Catatan: "${pendingTakeover.notes}"',
-                style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppColors.textSecondary),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
             const SizedBox(height: 12),
@@ -813,15 +976,26 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                     Get.dialog(
                       AlertDialog(
                         title: const Text('Tolak Pengalihan'),
-                        content: const Text('Apakah Anda yakin ingin menolak pengambilalihan ini?'),
+                        content: const Text(
+                          'Apakah Anda yakin ingin menolak pengambilalihan ini?',
+                        ),
                         actions: [
-                          TextButton(onPressed: () => Get.back(), child: const Text('Batal')),
+                          TextButton(
+                            onPressed: () => Get.back(),
+                            child: const Text('Batal'),
+                          ),
                           TextButton(
                             onPressed: () {
                               Get.back();
-                              controller.rejectTakeover(pendingTakeover.id, wo.id);
+                              controller.rejectTakeover(
+                                pendingTakeover.id,
+                                wo.id,
+                              );
                             },
-                            child: const Text('Tolak', style: TextStyle(color: AppColors.error)),
+                            child: const Text(
+                              'Tolak',
+                              style: TextStyle(color: AppColors.error),
+                            ),
                           ),
                         ],
                       ),
@@ -839,21 +1013,34 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                     Get.dialog(
                       AlertDialog(
                         title: const Text('Setujui Pengalihan'),
-                        content: const Text('Apakah Anda yakin ingin menyetujui pengambilalihan pekerjaan ini?'),
+                        content: const Text(
+                          'Apakah Anda yakin ingin menyetujui pengambilalihan pekerjaan ini?',
+                        ),
                         actions: [
-                          TextButton(onPressed: () => Get.back(), child: const Text('Batal')),
+                          TextButton(
+                            onPressed: () => Get.back(),
+                            child: const Text('Batal'),
+                          ),
                           TextButton(
                             onPressed: () {
                               Get.back();
-                              controller.approveTakeover(pendingTakeover.id, wo.id);
+                              controller.approveTakeover(
+                                pendingTakeover.id,
+                                wo.id,
+                              );
                             },
-                            child: const Text('Setujui', style: TextStyle(color: AppColors.success)),
+                            child: const Text(
+                              'Setujui',
+                              style: TextStyle(color: AppColors.success),
+                            ),
                           ),
                         ],
                       ),
                     );
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
                   child: const Text('SETUJUI'),
                 ),
               ],
@@ -891,8 +1078,10 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
               itemBuilder: (context, idx) {
                 final takeover = wo.takeovers[idx];
                 Color statusColor = Colors.grey;
-                if (takeover.status == 'approved') statusColor = AppColors.success;
-                if (takeover.status == 'rejected') statusColor = AppColors.error;
+                if (takeover.status == 'approved')
+                  statusColor = AppColors.success;
+                if (takeover.status == 'rejected')
+                  statusColor = AppColors.error;
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -905,33 +1094,51 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
                           Expanded(
                             child: Text(
                               'Dari: ${takeover.originalTechnician?.name ?? 'Teknisi'} ➔ Ke: ${takeover.requester?.name ?? 'Teknisi'}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: statusColor.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               takeover.status.toUpperCase(),
-                              style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: statusColor,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      if (takeover.notes != null && takeover.notes!.isNotEmpty) ...[
+                      if (takeover.notes != null &&
+                          takeover.notes!.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(
                           'Catatan: "${takeover.notes}"',
-                          style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppColors.textSecondary),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ],
                       const SizedBox(height: 4),
                       Text(
                         'Tanggal: ${DateHelper.formatDateTime(takeover.createdAt)}',
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                       if (idx < wo.takeovers.length - 1) const Divider(),
                     ],
@@ -961,9 +1168,7 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
             const SizedBox(height: 12),
             TextField(
               controller: textController,
-              decoration: const InputDecoration(
-                hintText: 'Tulis catatan...',
-              ),
+              decoration: const InputDecoration(hintText: 'Tulis catatan...'),
               maxLength: 255,
             ),
           ],
@@ -973,9 +1178,15 @@ class WorkOrderDetailView extends GetView<WorkOrderController> {
           TextButton(
             onPressed: () {
               Get.back();
-              controller.requestTakeover(woId, notes: textController.text.trim());
+              controller.requestTakeover(
+                woId,
+                notes: textController.text.trim(),
+              );
             },
-            child: const Text('Kirim', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Kirim',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

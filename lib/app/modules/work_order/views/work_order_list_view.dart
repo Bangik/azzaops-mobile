@@ -51,7 +51,10 @@ class WorkOrderListView extends GetView<WorkOrderController> {
               child: Row(
                 children: statusFilters.map((filter) {
                   return Obx(() {
-                    final isSelected = controller.selectedStatusFilter.value == filter['value'] && controller.selectedDateFilter.value == null;
+                    final isSelected =
+                        controller.selectedStatusFilter.value ==
+                            filter['value'] &&
+                        controller.selectedDateFilter.value == null;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8.0),
                       child: FilterChip(
@@ -59,8 +62,12 @@ class WorkOrderListView extends GetView<WorkOrderController> {
                         label: Text(
                           filter['label']!,
                           style: TextStyle(
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.textPrimary,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
                         ),
                         selectedColor: AppColors.primary,
@@ -76,28 +83,44 @@ class WorkOrderListView extends GetView<WorkOrderController> {
               ),
             ),
           ),
-          
+
           // Date Filter Indicator
           Obx(() {
             if (controller.selectedDateFilter.value != null) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 color: Colors.blue.shade50,
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today, size: 16, color: AppColors.primary),
+                    const Icon(
+                      Icons.calendar_today,
+                      size: 16,
+                      color: AppColors.primary,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Menampilkan tanggal: ${DateHelper.formatDate(controller.selectedDateFilter.value)} (${controller.selectedStatusFilter.value.toUpperCase()})',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.primary),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => controller.setFilters(status: 'all', date: null),
+                      onTap: () =>
+                          controller.setFilters(status: 'all', date: null),
                       child: Container(
                         padding: const EdgeInsets.all(4),
-                        child: const Icon(Icons.close, size: 16, color: AppColors.primary),
+                        child: const Icon(
+                          Icons.close,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                   ],
@@ -106,7 +129,7 @@ class WorkOrderListView extends GetView<WorkOrderController> {
             }
             return const SizedBox.shrink();
           }),
-          
+
           // Work Order List
           Expanded(
             child: Obx(() {
@@ -126,14 +149,18 @@ class WorkOrderListView extends GetView<WorkOrderController> {
                 child: ListView.builder(
                   controller: controller.scrollController,
                   padding: const EdgeInsets.all(16),
-                  itemCount: controller.workOrders.length + (controller.isLoadingMore.value ? 1 : 0),
+                  itemCount:
+                      controller.workOrders.length +
+                      (controller.isLoadingMore.value ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index == controller.workOrders.length) {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 16),
                         child: Center(
                           child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.primary,
+                            ),
                           ),
                         ),
                       );
@@ -154,9 +181,7 @@ class WorkOrderListView extends GetView<WorkOrderController> {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: () {
@@ -184,12 +209,30 @@ class WorkOrderListView extends GetView<WorkOrderController> {
               const Divider(height: 24),
               Row(
                 children: [
-                  const Icon(Icons.person_outline, size: 16, color: AppColors.textSecondary),
+                  const Icon(
+                    Icons.person_outline,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      wo.customer.displayName,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          wo.customer.displayName,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        if (wo.vendor != null)
+                          Text(
+                            'Vendor: ${wo.vendor!.name}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],
@@ -197,32 +240,20 @@ class WorkOrderListView extends GetView<WorkOrderController> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.construction_outlined, size: 16, color: AppColors.textSecondary),
+                  const Icon(
+                    Icons.construction_outlined,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      wo.type != null 
+                      wo.type != null
                           ? '${wo.serviceCategory.name} (${wo.type!.name})'
                           : wo.serviceCategory.name,
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(Icons.engineering_outlined, size: 16, color: AppColors.textSecondary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      wo.assignments.where((a) => a.status != 'transferred').isEmpty
-                          ? 'Belum Ditugaskan'
-                          : 'Teknisi: ${wo.assignments.where((a) => a.status != 'transferred').map((a) => a.technicianName).join(", ")}',
-                      style: TextStyle(
-                        color: wo.assignments.where((a) => a.status != 'transferred').isEmpty ? AppColors.warning : AppColors.textSecondary,
-                        fontSize: 15,
-                        fontWeight: wo.assignments.where((a) => a.status != 'transferred').isEmpty ? FontWeight.bold : FontWeight.bold,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
                       ),
                     ),
                   ),
@@ -231,17 +262,65 @@ class WorkOrderListView extends GetView<WorkOrderController> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.textSecondary),
+                  const Icon(
+                    Icons.engineering_outlined,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      DateHelper.formatDateTime(wo.scheduledDate, timeStr: wo.scheduledTime),
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      wo.assignments
+                              .where((a) => a.status != 'transferred')
+                              .isEmpty
+                          ? 'Belum Ditugaskan'
+                          : 'Teknisi: ${wo.assignments.where((a) => a.status != 'transferred').map((a) => a.technicianName).join(", ")}',
+                      style: TextStyle(
+                        color:
+                            wo.assignments
+                                .where((a) => a.status != 'transferred')
+                                .isEmpty
+                            ? AppColors.warning
+                            : AppColors.textSecondary,
+                        fontSize: 15,
+                        fontWeight:
+                            wo.assignments
+                                .where((a) => a.status != 'transferred')
+                                .isEmpty
+                            ? FontWeight.bold
+                            : FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      DateHelper.formatDateTime(
+                        wo.scheduledDate,
+                        timeStr: wo.scheduledTime,
+                      ),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                   if (wo.duration != null && wo.duration!.isNotEmpty) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.green.shade50,
                         borderRadius: BorderRadius.circular(4),
@@ -249,7 +328,11 @@ class WorkOrderListView extends GetView<WorkOrderController> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.timer_outlined, size: 12, color: Colors.green.shade800),
+                          Icon(
+                            Icons.timer_outlined,
+                            size: 12,
+                            color: Colors.green.shade800,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             wo.duration!,
@@ -266,7 +349,10 @@ class WorkOrderListView extends GetView<WorkOrderController> {
                   ],
                   if (wo.jobOrder != null) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4),
@@ -354,8 +440,12 @@ class WorkOrderListView extends GetView<WorkOrderController> {
       helpText: 'PILIH TANGGAL WORK ORDER',
     );
     if (picked != null) {
-      final dateStr = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-      controller.setFilters(status: controller.selectedStatusFilter.value, date: dateStr);
+      final dateStr =
+          "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+      controller.setFilters(
+        status: controller.selectedStatusFilter.value,
+        date: dateStr,
+      );
     }
   }
 }
