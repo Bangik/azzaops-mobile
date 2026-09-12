@@ -10,6 +10,7 @@ import '../../work_order/controllers/work_order_controller.dart';
 
 // Placeholder views that we will implement next
 import '../../work_order/views/work_order_list_view.dart';
+import '../../attendance/views/attendance_view.dart';
 import '../../notification/views/notification_view.dart';
 import '../../profile/views/profile_view.dart';
 
@@ -43,6 +44,11 @@ class HomeView extends GetView<HomeController> {
               icon: Icon(Icons.assignment_outlined),
               activeIcon: Icon(Icons.assignment),
               label: 'Work Order',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.fingerprint_outlined),
+              activeIcon: Icon(Icons.fingerprint),
+              label: 'Presensi',
             ),
             BottomNavigationBarItem(
               icon: Stack(
@@ -90,6 +96,7 @@ class HomeView extends GetView<HomeController> {
           children: [
             _buildDashboard(context),
             WorkOrderListView(),
+            const AttendanceView(),
             const NotificationView(),
             const ProfileView(),
           ],

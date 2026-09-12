@@ -8,4 +8,5 @@ class AppRoutes {
   static const SUBMIT_REPORT = '/work-order/report';
   static const NOTIFICATION = '/notification';
   static const PROFILE = '/profile';
+  static const ATTENDANCE = '/attendance';
 }

@@ -21,6 +21,9 @@ dependencies:
   device_info_plus: ^13.2.0
   package_info_plus: ^10.2.1
   ota_update: ^7.1.0
+  geolocator: ^14.0.3
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
 
 dev_dependencies:
   flutter_test:
