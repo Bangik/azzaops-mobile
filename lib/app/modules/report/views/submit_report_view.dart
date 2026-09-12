@@ -12,16 +12,6 @@ class SubmitReportView extends GetView<ReportController> {
   Widget build(BuildContext context) {
     final int woId = Get.arguments as int;
 
-    // Reset fields on load
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final controller = Get.put(ReportController());
-      controller.findingsController.clear();
-      controller.workDoneController.clear();
-      controller.recommendationsController.clear();
-      controller.materialsUsedController.clear();
-      controller.pickedPhotos.clear();
-    });
-
     return Scaffold(
       appBar: const CustomAppBar(title: 'Submit Laporan Pekerjaan'),
       body: Obx(() {

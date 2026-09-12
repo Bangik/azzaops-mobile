@@ -32,6 +32,57 @@ class ReportController extends GetxController {
 
   final isLoading = false.obs;
   final pickedPhotos = <PickedPhoto>[].obs;
+  
+  int? woId;
+
+  @override
+  void onInit() {
+    super.onInit();
+    woId = Get.arguments as int?;
+    if (woId != null) {
+      _loadDraft(woId!);
+    }
+    
+    findingsController.addListener(_saveDraft);
+    workDoneController.addListener(_saveDraft);
+    recommendationsController.addListener(_saveDraft);
+    materialsUsedController.addListener(_saveDraft);
+  }
+
+  void _loadDraft(int id) {
+    final draft = StorageHelper.getReportDraft(id);
+    if (draft != null) {
+      findingsController.text = draft['findings'] ?? '';
+      workDoneController.text = draft['work_done'] ?? '';
+      recommendationsController.text = draft['recommendations'] ?? '';
+      materialsUsedController.text = draft['materials_used'] ?? '';
+      
+      if (draft['photos'] != null) {
+        final photos = List<dynamic>.from(draft['photos']);
+        for (var p in photos) {
+          final file = File(p['path']);
+          if (file.existsSync()) {
+            pickedPhotos.add(PickedPhoto(file: file, type: p['type'], caption: p['caption']));
+          }
+        }
+      }
+    }
+  }
+
+  void _saveDraft() {
+    if (woId == null) return;
+    StorageHelper.saveReportDraft(woId!, {
+      'findings': findingsController.text,
+      'work_done': workDoneController.text,
+      'recommendations': recommendationsController.text,
+      'materials_used': materialsUsedController.text,
+      'photos': pickedPhotos.map((p) => {
+        'path': p.file.path,
+        'type': p.type,
+        'caption': p.caption.value,
+      }).toList(),
+    });
+  }
 
   @override
   void onClose() {
@@ -43,11 +94,6 @@ class ReportController extends GetxController {
   }
 
   Future<void> addPhoto(BuildContext context, String type) async {
-    if (pickedPhotos.length >= 10) {
-      Get.snackbar('Batas Terpenuhi', 'Maksimal 10 foto per laporan');
-      return;
-    }
-
     final File? file = await PhotoPicker.showSourceDialog(context);
     if (file != null) {
       // Check file size (must be <= 5MB)
@@ -67,11 +113,13 @@ class ReportController extends GetxController {
           caption: captionText ?? '',
         ),
       );
+      _saveDraft();
     }
   }
 
   void removePhoto(int index) {
     pickedPhotos.removeAt(index);
+    _saveDraft();
   }
 
   Future<String?> _promptForCaption(BuildContext context) async {
@@ -174,6 +222,11 @@ class ReportController extends GetxController {
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         if (body['success'] == true) {
+          // Hapus draft setelah berhasil submit
+          if (woId != null) {
+            StorageHelper.clearReportDraft(woId!);
+          }
+          
           // Go back first to avoid popping the snackbar overlay
           Get.back();
 

@@ -51,4 +51,16 @@ class StorageHelper {
   static Future<void> clearAll() async {
     await _box.erase();
   }
+
+  static void saveReportDraft(int woId, Map<String, dynamic> data) {
+    _box.write('report_draft_$woId', data);
+  }
+
+  static Map<String, dynamic>? getReportDraft(int woId) {
+    return _box.read<Map<String, dynamic>>('report_draft_$woId');
+  }
+
+  static void clearReportDraft(int woId) {
+    _box.remove('report_draft_$woId');
+  }
 }

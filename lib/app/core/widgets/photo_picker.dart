@@ -73,10 +73,7 @@ class PhotoPicker {
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textPrimary,
-            ),
+            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
           ),
         ],
       ),
@@ -87,7 +84,9 @@ class PhotoPicker {
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
-        imageQuality: 70, // Automatically compress to 70% quality as requested
+        imageQuality: 70,
+        // maxWidth: 1024,
+        // maxHeight: 1024,
       );
       if (image != null) {
         return File(image.path);
